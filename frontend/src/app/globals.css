@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. One neutral graphite scale + a single "ember" accent used
+ * sparingly (timestamps, primary action, focus). Everything else is contrast
+ * and spacing.
+ */
+:root {
+  --bg: oklch(0.992 0.002 90);
+  --bg-subtle: oklch(0.975 0.003 90);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.965 0.004 90);
+  --border: oklch(0.91 0.004 90);
+  --border-strong: oklch(0.84 0.006 90);
+  --fg: oklch(0.2 0.006 270);
+  --fg-muted: oklch(0.47 0.01 270);
+  --fg-subtle: oklch(0.6 0.008 270);
+  --accent: oklch(0.63 0.2 38);
+  --accent-fg: oklch(0.99 0.01 60);
+  --accent-soft: oklch(0.95 0.035 45);
+  --accent-text: oklch(0.52 0.19 38);
+  --visual: oklch(0.55 0.15 265);
+  --visual-soft: oklch(0.95 0.03 265);
+  --success: oklch(0.62 0.15 155);
+  --danger: oklch(0.58 0.2 25);
+  --danger-soft: oklch(0.96 0.03 25);
+  --ring: oklch(0.63 0.2 38 / 0.55);
+  --shadow: 0 1px 2px oklch(0.2 0.01 270 / 0.04), 0 8px 24px -12px oklch(0.2 0.01 270 / 0.12);
+}
+
+.dark {
+  --bg: oklch(0.155 0.004 270);
+  --bg-subtle: oklch(0.18 0.005 270);
+  --surface: oklch(0.195 0.005 270);
+  --surface-2: oklch(0.235 0.006 270);
+  --border: oklch(0.27 0.006 270);
+  --border-strong: oklch(0.34 0.008 270);
+  --fg: oklch(0.96 0.003 90);
+  --fg-muted: oklch(0.72 0.008 270);
+  --fg-subtle: oklch(0.58 0.008 270);
+  --accent: oklch(0.7 0.18 40);
+  --accent-fg: oklch(0.17 0.02 40);
+  --accent-soft: oklch(0.3 0.06 40);
+  --accent-text: oklch(0.78 0.15 45);
+  --visual: oklch(0.75 0.12 265);
+  --visual-soft: oklch(0.3 0.06 265);
+  --success: oklch(0.72 0.15 155);
+  --danger: oklch(0.7 0.17 25);
+  --danger-soft: oklch(0.3 0.07 25);
+  --ring: oklch(0.7 0.18 40 / 0.6);
+  --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 32px -16px oklch(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-visual: var(--visual);
+  --color-visual-soft: var(--visual-soft);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  --shadow-card: var(--shadow);
+  --animate-shimmer: shimmer 2.2s linear infinite;
+  --animate-scan: scan 2.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes flash {
+  0% { background-color: var(--accent-soft); }
+  100% { background-color: transparent; }
+}
+@keyframes scan {
+  0%, 100% { transform: translateY(-10%); opacity: 0; }
+  15%, 85% { opacity: 1; }
+  50% { transform: translateY(1000%); }
+}
+
+@layer base {
+  * { border-color: var(--border); }
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection { background: var(--accent-soft); }
+}
+
+@layer utilities {
+  .tabular { font-variant-numeric: tabular-nums; }
+  .scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, var(--border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%);
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.6s ease infinite;
+  }
+}
+
+/* Markdown answers */
+.prose-answer { line-height: 1.65; font-size: 0.925rem; }
+.prose-answer > * + * { margin-top: 0.7em; }
+.prose-answer ul { list-style: disc; padding-left: 1.2rem; }
+.prose-answer ol { list-style: decimal; padding-left: 1.2rem; }
+.prose-answer li + li { margin-top: 0.3em; }
+.prose-answer strong { font-weight: 600; }
+.prose-answer a:not([data-ts]) { color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; }
+.prose-answer :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 0.1em 0.35em;
+  border-radius: 5px;
+}
+.prose-answer pre {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+}
+.prose-answer h1, .prose-answer h2, .prose-answer h3 { font-weight: 600; letter-spacing: -0.01em; }
+
+/* highlight.js — token colours mapped onto our palette */
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: oklch(0.55 0.2 300); }
+.hljs-string, .hljs-attr { color: oklch(0.55 0.14 150); }
+.hljs-number, .hljs-literal { color: var(--accent-text); }
+.hljs-comment { color: var(--fg-subtle); font-style: italic; }
+.hljs-title, .hljs-function .hljs-title, .hljs-title.function_ { color: oklch(0.55 0.15 250); }
+.hljs-type, .hljs-class .hljs-title { color: oklch(0.6 0.13 80); }
+.dark .hljs-keyword, .dark .hljs-selector-tag, .dark .hljs-built_in { color: oklch(0.78 0.13 300); }
+.dark .hljs-string, .dark .hljs-attr { color: oklch(0.8 0.13 150); }
+.dark .hljs-title, .dark .hljs-title.function_ { color: oklch(0.8 0.11 250); }
+.dark .hljs-type { color: oklch(0.83 0.12 85); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

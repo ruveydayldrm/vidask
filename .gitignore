@@ -1,0 +1,27 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# runtime data & secrets
+data/
+.env
+.env.local
+eval/cache/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
