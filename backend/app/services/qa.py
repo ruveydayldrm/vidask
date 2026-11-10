@@ -22,6 +22,7 @@ from app.providers.llm import LLMProvider, Message, estimate_tokens
 from app.services.citations import CitationStreamFilter, CitationValidator, tidy
 from app.services.prompts import (
     ABSTAIN_MESSAGES,
+    LEAKED_MARKUP,
     NO_ANSWER,
     detect_lang,
     format_context,
@@ -96,7 +97,7 @@ class QAService:
         msgs = [Message("system", qa_system_prompt(lang, title))]
         for turn in req.history[-HISTORY_TURNS:]:
             msgs.append(Message(turn.role, turn.content))
-        msgs.append(Message("user", qa_user_prompt(format_context(context), req.question)))
+        msgs.append(Message("user", qa_user_prompt(format_context(context), req.question, lang)))
         return msgs
 
     async def stream_answer(
@@ -169,7 +170,8 @@ class QAService:
             if tail:
                 yield {"event": "token", "data": {"text": tail}}
             final_validator = CitationValidator(context, self.settings.citation_tolerance_s)
-            answer = tidy(final_validator.process(full_raw.replace(NO_ANSWER, "")))
+            cleaned = LEAKED_MARKUP.sub("", full_raw.replace(NO_ANSWER, ""))
+            answer = tidy(final_validator.process(cleaned))
             citations, removed = final_validator.citations, final_validator.removed
 
         latency = int((time.perf_counter() - t0) * 1000)

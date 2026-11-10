@@ -37,7 +37,23 @@ def extract_json(text: str) -> dict[str, Any]:
     return data
 
 
-def clean_chapters(raw: Any, duration: float, intro_title: str) -> list[Chapter]:
+def chapter_budget(duration: float) -> int:
+    """~1 chapter per 45 s, between 3 and 12 (a 3-minute video gets 5, not 9)."""
+    return max(3, min(12, round(duration / 45) + 1)) if duration else 8
+
+
+def clean_chapters(
+    raw: Any,
+    duration: float,
+    intro_title: str,
+    anchors: list[float] | None = None,
+    max_chapters: int = 12,
+) -> list[Chapter]:
+    """Validate model-proposed chapters.
+
+    Small models invent round numbers ("00:15", "00:25"); snapping each start to
+    the nearest real transcript block start keeps chapters on actual boundaries.
+    """
     chapters: list[Chapter] = []
     if not isinstance(raw, list):
         return chapters
@@ -52,6 +68,8 @@ def clean_chapters(raw: Any, duration: float, intro_title: str) -> list[Chapter]
         secs = parse_ts(m.group(0))
         if duration and secs > duration:
             continue
+        if anchors:
+            secs = min(anchors, key=lambda a: abs(a - secs))
         chapters.append(Chapter(start=secs, title=title[:80]))
     chapters.sort(key=lambda c: c.start)
     deduped: list[Chapter] = []
@@ -63,7 +81,10 @@ def clean_chapters(raw: Any, duration: float, intro_title: str) -> list[Chapter]
         deduped.insert(0, Chapter(start=0, title=intro_title))
     elif deduped:
         deduped[0] = deduped[0].model_copy(update={"start": 0.0})
-    return deduped[:12]
+    if len(deduped) > max_chapters:
+        stride = len(deduped) / max_chapters
+        deduped = [deduped[int(i * stride)] for i in range(max_chapters)]
+    return deduped
 
 
 async def _condense(llm: LLMProvider, lang: str, lines: list[str], budget: int) -> list[str]:
@@ -92,13 +113,18 @@ async def generate_insights(
 ) -> Insights:
     lang = transcript.language if transcript.language in ("tr", "en") else "en"
     lines = timestamped_text(transcript)
+    anchors = [
+        b.start
+        for b in chunk_segments(transcript.segments, transcript.video_id, target=30.0, overlap=0)
+    ]
+    n_chapters = chapter_budget(duration)
     budget = int(llm.context_window * 0.6) - 600
     rounds = 0
     while estimate_tokens("\n".join(lines)) > budget and rounds < 3:
         lines = await _condense(llm, lang, lines, budget)
         rounds += 1
 
-    prompt = insights_prompt(lang, title, "\n".join(lines), format_ts(duration))
+    prompt = insights_prompt(lang, title, "\n".join(lines), format_ts(duration), n_chapters)
     last_err: Exception | None = None
     for attempt in range(2):
         out = await llm.complete([Message("user", prompt)], json_mode=True, max_tokens=900)
@@ -108,7 +134,11 @@ async def generate_insights(
             insights = Insights(
                 summary=str(data.get("summary", "")).strip(),
                 chapters=clean_chapters(
-                    data.get("chapters"), duration, "Giriş" if lang == "tr" else "Intro"
+                    data.get("chapters"),
+                    duration,
+                    "Giriş" if lang == "tr" else "Intro",
+                    anchors=anchors,
+                    max_chapters=n_chapters,
                 ),
                 suggested_questions=questions[:5],
             )

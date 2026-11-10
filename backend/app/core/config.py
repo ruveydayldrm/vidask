@@ -9,6 +9,7 @@ overridden at runtime from the UI; those overrides are persisted to
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -38,6 +39,9 @@ class Settings(BaseSettings):
     # --- hardware ----------------------------------------------------------
     device: Literal["auto", "cpu", "cuda"] = "auto"
     min_gpu_vram_gb: float = 4.0
+    # Hugging Face cache dir. Useful on Windows when the user profile path has
+    # non-ASCII characters, which some download backends choke on.
+    hf_home: str = ""
 
     # --- LLM ---------------------------------------------------------------
     llm_provider: ProviderName = "ollama"
@@ -102,7 +106,10 @@ RUNTIME_KEYS = {"llm_provider", "llm_model", "vision_enabled", "reranker_enabled
 
 @lru_cache
 def _base_settings() -> Settings:
-    return Settings()
+    s = Settings()
+    if s.hf_home:
+        os.environ.setdefault("HF_HOME", s.hf_home)
+    return s
 
 
 def get_settings() -> Settings:

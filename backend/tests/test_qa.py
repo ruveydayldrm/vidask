@@ -40,7 +40,8 @@ async def test_full_context_answer_with_valid_and_fake_citations(transcript: Tra
     assert "[00:12]" in streamed_text(events)
     # the prompt carried timestamped excerpts and the question
     prompt = llm.calls[0][-1].content
-    assert "[00:00] (spoken) Welcome" in prompt
+    assert "[00:00] Welcome" in prompt
+    assert "Answer in English" in prompt
     assert "What is a decorator?" in prompt
 
 

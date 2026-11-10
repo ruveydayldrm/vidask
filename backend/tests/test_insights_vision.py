@@ -2,7 +2,12 @@ import json
 
 from app.models.schemas import Transcript
 from app.providers.llm.fake import FakeProvider
-from app.services.insights import clean_chapters, extract_json, generate_insights
+from app.services.insights import (
+    chapter_budget,
+    clean_chapters,
+    extract_json,
+    generate_insights,
+)
 
 
 def test_extract_json_from_fenced_output() -> None:
@@ -25,6 +30,17 @@ def test_clean_chapters_sorts_filters_and_anchors_intro() -> None:
         (40, "First topic"),
         (300, "Later"),
     ]
+
+
+def test_chapters_snap_to_anchors_and_respect_budget() -> None:
+    raw = [{"start": f"00:{s:02d}", "title": f"t{s}"} for s in (0, 15, 25, 40, 56)]
+    raw += [{"start": "01:10", "title": "late"}, {"start": "01:40", "title": "later"}]
+    anchors = [0.0, 31.0, 62.0, 95.0]
+    chapters = clean_chapters(raw, 120, "Intro", anchors=anchors, max_chapters=3)
+    assert len(chapters) == 3
+    assert all(c.start in anchors for c in chapters)
+    assert chapter_budget(165) == 5
+    assert chapter_budget(3600) == 12
 
 
 async def test_generate_insights(transcript: Transcript) -> None:
