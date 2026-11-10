@@ -114,6 +114,24 @@ def download_audio(video_id: str, out_dir: Path) -> Path:
 _whisper_cache: dict[tuple[str, str, str], object] = {}
 
 
+def _run_whisper(
+    model: object, audio: Path, duration: float, *, vad: bool, progress: ProgressFn
+) -> tuple[list[Segment], object]:
+    seg_iter, info = model.transcribe(  # type: ignore[attr-defined]
+        str(audio), vad_filter=vad, beam_size=1
+    )
+    total = duration or float(getattr(info, "duration", 0) or 0)
+    segments: list[Segment] = []
+    for s in seg_iter:
+        text = s.text.strip()
+        if text:
+            segments.append(Segment(start=s.start, end=s.end, text=text))
+        if total:
+            frac = min(s.end / total, 1.0)
+            progress(0.1 + 0.9 * frac, f"Whisper {int(frac * 100)}%")
+    return segments, info
+
+
 def transcribe_whisper(
     video_id: str,
     settings: Settings,
@@ -137,23 +155,21 @@ def transcribe_whisper(
         except Exception as exc:
             raise TranscriptUnavailableError(f"Audio download failed: {exc}") from exc
         progress(0.1, "Transcribing with Whisper")
-        seg_iter, info = model.transcribe(  # type: ignore[attr-defined]
-            str(audio), vad_filter=True, beam_size=1
-        )
-        total = duration or float(getattr(info, "duration", 0) or 0)
-        segments: list[Segment] = []
-        for s in seg_iter:
-            segments.append(Segment(start=s.start, end=s.end, text=s.text.strip()))
-            if total:
-                frac = min(s.end / total, 1.0)
-                progress(0.1 + 0.9 * frac, f"Whisper {int(frac * 100)}%")
+        segments, info = _run_whisper(model, audio, duration, vad=True, progress=progress)
+        if not segments:
+            # Silero VAD treats singing over music (and some noisy speech) as
+            # non-speech. Retry once without it before giving up.
+            log.info("whisper.vad_empty_retry", video_id=video_id)
+            progress(0.1, "No speech detected, retrying without VAD")
+            segments, info = _run_whisper(model, audio, duration, vad=False, progress=progress)
 
     if not segments:
         raise TranscriptUnavailableError("Whisper produced no speech for this video.")
-    log.info("whisper.done", video_id=video_id, language=info.language, segments=len(segments))
+    language = str(getattr(info, "language", "") or "")
+    log.info("whisper.done", video_id=video_id, language=language, segments=len(segments))
     return Transcript(
         video_id=video_id,
-        language=info.language,
+        language=language,
         source=TranscriptSource.WHISPER,
         segments=segments,
     )
