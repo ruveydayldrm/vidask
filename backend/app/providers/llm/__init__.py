@@ -12,7 +12,9 @@ __all__ = ["LLMProvider", "Message", "build_llm", "estimate_tokens"]
 _HOSTED_CONTEXT = {"groq": 32768, "gemini": 131072}
 
 
-def build_llm(settings: Settings, *, provider: str | None = None, model: str | None = None) -> LLMProvider:
+def build_llm(
+    settings: Settings, *, provider: str | None = None, model: str | None = None
+) -> LLMProvider:
     name = provider or settings.llm_provider
     if name == "ollama":
         from app.providers.llm.ollama import OllamaProvider
@@ -28,7 +30,8 @@ def build_llm(settings: Settings, *, provider: str | None = None, model: str | N
         from app.providers.llm.groq import GroqProvider
 
         return GroqProvider(
-            model=model or (settings.llm_model if settings.llm_provider == "groq" else settings.groq_model),
+            model=model
+            or (settings.llm_model if settings.llm_provider == "groq" else settings.groq_model),
             context_window=_HOSTED_CONTEXT["groq"],
             api_key=settings.groq_api_key,
             temperature=settings.llm_temperature,

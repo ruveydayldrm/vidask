@@ -21,7 +21,13 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     import app.pipeline.runner as runner
 
     def fake_meta(video_id: str) -> VideoMeta:
-        return VideoMeta(video_id=video_id, url=f"https://youtu.be/{video_id}", title="Decorators", channel="Ch", duration=132)
+        return VideoMeta(
+            video_id=video_id,
+            url=f"https://youtu.be/{video_id}",
+            title="Decorators",
+            channel="Ch",
+            duration=132,
+        )
 
     def fake_transcript(video_id: str, *_: object, **__: object) -> Transcript:
         return make_transcript(video_id)
@@ -84,7 +90,9 @@ def test_process_then_cache_then_chat(client: TestClient) -> None:
     assert ev[-1] == ("end", "ready")
 
     # second request is a cache hit
-    again = client.post("/api/videos", json={"url": f"https://www.youtube.com/watch?v={VID}"}).json()
+    again = client.post(
+        "/api/videos", json={"url": f"https://www.youtube.com/watch?v={VID}"}
+    ).json()
     assert again["cached"] is True and again["job_id"] is None
 
     video = client.get(f"/api/videos/{VID}").json()

@@ -24,7 +24,10 @@ def test_manual_in_spoken_language_wins() -> None:
 
 
 def test_no_auto_track_uses_preferred_then_any() -> None:
-    assert choose_track([Track("de", False), Track("en", False)], ["tr", "en"])[0].language_code == "en"
+    assert (
+        choose_track([Track("de", False), Track("en", False)], ["tr", "en"])[0].language_code
+        == "en"
+    )
     assert choose_track([Track("de", False)], ["tr", "en"])[0].language_code == "de"
 
 

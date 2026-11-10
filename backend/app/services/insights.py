@@ -17,7 +17,9 @@ log = get_logger(__name__)
 
 
 def timestamped_text(transcript: Transcript, block_seconds: float = 30.0) -> list[str]:
-    blocks = chunk_segments(transcript.segments, transcript.video_id, target=block_seconds, overlap=0)
+    blocks = chunk_segments(
+        transcript.segments, transcript.video_id, target=block_seconds, overlap=0
+    )
     return [f"[{format_ts(b.start)}] {b.text}" for b in blocks]
 
 
@@ -77,13 +79,17 @@ async def _condense(llm: LLMProvider, lang: str, lines: list[str], budget: int) 
         used += t
     notes: list[str] = []
     for i, w in enumerate(windows):
-        out = await llm.complete([Message("user", notes_prompt(lang, "\n".join(w)))], max_tokens=600)
+        out = await llm.complete(
+            [Message("user", notes_prompt(lang, "\n".join(w)))], max_tokens=600
+        )
         notes.extend(ln.strip() for ln in out.splitlines() if ln.strip())
         log.info("insights.condensed_window", window=i + 1, of=len(windows))
     return notes
 
 
-async def generate_insights(transcript: Transcript, title: str, duration: float, llm: LLMProvider) -> Insights:
+async def generate_insights(
+    transcript: Transcript, title: str, duration: float, llm: LLMProvider
+) -> Insights:
     lang = transcript.language if transcript.language in ("tr", "en") else "en"
     lines = timestamped_text(transcript)
     budget = int(llm.context_window * 0.6) - 600

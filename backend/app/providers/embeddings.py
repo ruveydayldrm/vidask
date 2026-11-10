@@ -44,7 +44,10 @@ class SentenceTransformerEmbedder(Embedder):
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         with self._lock:
             vecs = self.model.encode(
-                texts, batch_size=self.batch_size, normalize_embeddings=True, show_progress_bar=False
+                texts,
+                batch_size=self.batch_size,
+                normalize_embeddings=True,
+                show_progress_bar=False,
             )
         return [v.tolist() for v in vecs]
 

@@ -79,8 +79,7 @@ def fetch_captions(video_id: str, languages: list[str]) -> Transcript | None:
         return None
 
     segments = [
-        Segment(start=float(s.start), end=float(s.start + s.duration), text=s.text)
-        for s in fetched
+        Segment(start=float(s.start), end=float(s.start + s.duration), text=s.text) for s in fetched
     ]
     log.info(
         "captions.fetched",

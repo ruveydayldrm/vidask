@@ -132,7 +132,9 @@ def extract_visual_chunks(
 
         progress(0.15, "Detecting scene changes")
         scenes = detect(
-            str(path), ContentDetector(threshold=settings.vision_scene_threshold), show_progress=False
+            str(path),
+            ContentDetector(threshold=settings.vision_scene_threshold),
+            show_progress=False,
         )
         bounds = [(s.get_seconds(), e.get_seconds()) for s, e in scenes]
         times = pick_timestamps(bounds, duration, settings.vision_max_frames)
@@ -179,6 +181,8 @@ def extract_visual_chunks(
         )
     for i, ch in enumerate(chunks):
         nxt = chunks[i + 1].start if i + 1 < len(chunks) else (duration or ch.start + 15)
-        chunks[i] = ch.model_copy(update={"end": round(max(min(nxt, ch.start + 60), ch.start + 5), 2)})
+        chunks[i] = ch.model_copy(
+            update={"end": round(max(min(nxt, ch.start + 60), ch.start + 5), 2)}
+        )
     log.info("vision.done", video_id=video_id, visual_chunks=len(chunks))
     return chunks

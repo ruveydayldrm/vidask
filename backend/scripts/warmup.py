@@ -23,13 +23,20 @@ def main() -> None:
     t = time.perf_counter()
     emb = get_embedder(s)
     emb.embed_query("merhaba dünya / hello world")
-    log.info("warmup.embedder_ready", model=s.embedding_model, dim=emb.dim, s=round(time.perf_counter() - t, 1))
+    log.info(
+        "warmup.embedder_ready",
+        model=s.embedding_model,
+        dim=emb.dim,
+        s=round(time.perf_counter() - t, 1),
+    )
 
     t = time.perf_counter()
     rr = get_reranker(s)
     if rr:
         rr.score("test", ["a test passage"])
-        log.info("warmup.reranker_ready", model=s.reranker_model, s=round(time.perf_counter() - t, 1))
+        log.info(
+            "warmup.reranker_ready", model=s.reranker_model, s=round(time.perf_counter() - t, 1)
+        )
 
 
 if __name__ == "__main__":

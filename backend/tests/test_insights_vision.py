@@ -20,13 +20,20 @@ def test_clean_chapters_sorts_filters_and_anchors_intro() -> None:
         "garbage",
     ]
     chapters = clean_chapters(raw, duration=600, intro_title="Intro")
-    assert [(c.start, c.title) for c in chapters] == [(0, "Intro"), (40, "First topic"), (300, "Later")]
+    assert [(c.start, c.title) for c in chapters] == [
+        (0, "Intro"),
+        (40, "First topic"),
+        (300, "Later"),
+    ]
 
 
 async def test_generate_insights(transcript: Transcript) -> None:
     payload = {
         "summary": "A tutorial on decorators.",
-        "chapters": [{"start": "00:00", "title": "Basics"}, {"start": "01:12", "title": "Class decorators"}],
+        "chapters": [
+            {"start": "00:00", "title": "Basics"},
+            {"start": "01:12", "title": "Class decorators"},
+        ],
         "questions": ["What is a decorator?", "Why use wraps?", "q3", "q4", "q5", "q6"],
     }
     llm = FakeProvider(json.dumps(payload))

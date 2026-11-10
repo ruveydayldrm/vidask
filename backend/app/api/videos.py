@@ -52,7 +52,12 @@ async def process(req: ProcessRequest) -> ProcessResponse:
     vision = settings.vision_enabled if req.vision is None else req.vision
 
     rec = store.get_video(video_id)
-    if rec and rec.status == VideoStatus.READY and not req.force and (rec.vision_used or not vision):
+    if (
+        rec
+        and rec.status == VideoStatus.READY
+        and not req.force
+        and (rec.vision_used or not vision)
+    ):
         log.info("process.cache_hit", video_id=video_id)
         return ProcessResponse(video_id=video_id, job_id=None, cached=True, status=rec.status)
 
@@ -70,7 +75,9 @@ async def process(req: ProcessRequest) -> ProcessResponse:
     store.upsert_video(rec)
     get_queue().enqueue(job.id, video_id, vision, req.force)
     log.info("process.enqueued", video_id=video_id, job_id=job.id, vision=vision)
-    return ProcessResponse(video_id=video_id, job_id=job.id, cached=False, status=VideoStatus.PROCESSING)
+    return ProcessResponse(
+        video_id=video_id, job_id=job.id, cached=False, status=VideoStatus.PROCESSING
+    )
 
 
 @router.get("/videos", response_model=list[VideoRecord])
@@ -160,6 +167,9 @@ async def chat(video_id: str, req: ChatRequest) -> EventSourceResponse:
             yield {"event": "error", "data": json.dumps({"code": exc.code, "message": exc.message})}
         except Exception as exc:
             log.exception("chat.failed", video_id=video_id)
-            yield {"event": "error", "data": json.dumps({"code": "internal_error", "message": str(exc)})}
+            yield {
+                "event": "error",
+                "data": json.dumps({"code": "internal_error", "message": str(exc)}),
+            }
 
     return EventSourceResponse(gen(), ping=15)

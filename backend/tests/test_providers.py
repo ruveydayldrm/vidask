@@ -10,7 +10,12 @@ from app.providers.llm.gemini import GeminiProvider
 from app.providers.llm.groq import GroqProvider
 from app.providers.llm.ollama import OllamaProvider
 
-MSGS = [Message("system", "be brief"), Message("user", "hi"), Message("assistant", "yo"), Message("user", "q")]
+MSGS = [
+    Message("system", "be brief"),
+    Message("user", "hi"),
+    Message("assistant", "yo"),
+    Message("user", "q"),
+]
 
 
 def _transport(handler):  # type: ignore[no-untyped-def]
@@ -36,7 +41,9 @@ async def test_ollama_streams_ndjson() -> None:
 
 
 async def test_ollama_error_status() -> None:
-    p = OllamaProvider("m", 2048, transport=_transport(lambda r: httpx.Response(404, text="model not found")))
+    p = OllamaProvider(
+        "m", 2048, transport=_transport(lambda r: httpx.Response(404, text="model not found"))
+    )
     with pytest.raises(ProviderError, match="404"):
         await p.complete(MSGS)
 

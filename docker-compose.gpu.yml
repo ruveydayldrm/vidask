@@ -1,0 +1,15 @@
+# NVIDIA GPU override (requires the NVIDIA Container Toolkit).
+#   TORCH_VARIANT=cu124 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+x-gpu: &gpu
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+
+services:
+  ollama: *gpu
+  api: *gpu
+  worker: *gpu

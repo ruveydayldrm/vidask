@@ -124,7 +124,12 @@ def process_video(job_id: str, video_id: str, vision: bool, force: bool = False)
                 code="video_too_long",
             )
         rec = store.get_video(video_id) or VideoRecord(meta=meta)
-        rec.meta, rec.status, rec.error, rec.latest_job_id = meta, VideoStatus.PROCESSING, None, job_id
+        rec.meta, rec.status, rec.error, rec.latest_job_id = (
+            meta,
+            VideoStatus.PROCESSING,
+            None,
+            job_id,
+        )
         store.upsert_video(rec)
         rep.finish(stage, meta.title)
 
@@ -185,7 +190,9 @@ def process_video(job_id: str, video_id: str, vision: bool, force: bool = False)
             part = all_chunks[i : i + batch]
             vectors.extend(embedder.embed_documents([c.text for c in part]))
             done = min(i + batch, len(all_chunks))
-            rep.update(stage, 0.1 + 0.8 * done / len(all_chunks), f"Embedding {done}/{len(all_chunks)}")
+            rep.update(
+                stage, 0.1 + 0.8 * done / len(all_chunks), f"Embedding {done}/{len(all_chunks)}"
+            )
         vs = get_vector_store()
         vs.delete_video(video_id)
         vs.upsert(all_chunks, vectors)

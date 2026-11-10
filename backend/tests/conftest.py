@@ -44,7 +44,9 @@ def make_transcript(video_id: str = "abcdefghijk", lang: str = "en") -> Transcri
         "Thanks for watching and see you next time.",
     ]
     segs = [Segment(start=i * 12.0, end=i * 12.0 + 11.5, text=t) for i, t in enumerate(lines)]
-    return Transcript(video_id=video_id, language=lang, source=TranscriptSource.MANUAL, segments=segs)
+    return Transcript(
+        video_id=video_id, language=lang, source=TranscriptSource.MANUAL, segments=segs
+    )
 
 
 @pytest.fixture

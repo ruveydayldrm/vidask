@@ -24,7 +24,10 @@ def _chunks() -> list[Chunk]:
         "Services expose pods over the network with a stable IP.",
         "Thanks for watching, subscribe for more.",
     ]
-    return [Chunk(video_id="v", idx=i, start=i * 45, end=i * 45 + 45, text=t) for i, t in enumerate(texts)]
+    return [
+        Chunk(video_id="v", idx=i, start=i * 45, end=i * 45 + 45, text=t)
+        for i, t in enumerate(texts)
+    ]
 
 
 def _retriever(reranker: bool) -> tuple[HybridRetriever, list[Chunk]]:
@@ -48,8 +51,16 @@ def test_without_reranker_returns_rrf_order() -> None:
     assert res.chunks[0].start == 90
 
 
+def test_ablation_switches() -> None:
+    r, chunks = _retriever(reranker=True)
+    bm = r.retrieve("v", "replica sets", chunks, top_k=1, use_vector=False, use_reranker=False)
+    assert set(bm.timings_ms) == {"bm25"}
+    vec = r.retrieve("v", "replica sets", chunks, top_k=1, use_bm25=False, use_reranker=False)
+    assert set(vec.timings_ms) == {"vector"}
+
+
 def test_vector_store_isolation_between_videos() -> None:
-    r, chunks = _retriever(reranker=False)
+    r, _ = _retriever(reranker=False)
     assert r.vectors.has_video("v")
     assert not r.vectors.has_video("other")
     r.vectors.delete_video("v")

@@ -1,0 +1,79 @@
+# One command: `docker compose up`  →  http://localhost:3000
+# GPU (NVIDIA):  docker compose -f docker-compose.yml -f docker-compose.gpu.yml up
+name: vidask
+
+x-backend: &backend
+  build:
+    context: ./backend
+    args:
+      TORCH_VARIANT: ${TORCH_VARIANT:-cpu}
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    QDRANT_URL: http://qdrant:6333
+    REDIS_URL: redis://redis:6379/0
+    QUEUE_BACKEND: rq
+    OLLAMA_BASE_URL: http://ollama:11434
+    DATA_DIR: /data
+    CORS_ORIGINS: '["http://localhost:3000"]'
+  volumes:
+    - vidask-data:/data
+    - hf-models:/models
+  depends_on:
+    qdrant: { condition: service_started }
+    redis: { condition: service_healthy }
+    ollama-pull: { condition: service_completed_successfully }
+  restart: unless-stopped
+
+services:
+  api:
+    <<: *backend
+    ports: ["8000:8000"]
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.worker"]
+    healthcheck: { disable: true }
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports: ["3000:3000"]
+    depends_on: [api]
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.5
+    volumes: [qdrant-data:/qdrant/storage]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes: [ollama-models:/root/.ollama]
+    restart: unless-stopped
+
+  # Pulls the configured model once, then exits.
+  ollama-pull:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c", "sleep 3 && ollama pull ${LLM_MODEL:-qwen2.5:3b}"]
+    depends_on: [ollama]
+    restart: "no"
+
+volumes:
+  vidask-data:
+  hf-models:
+  qdrant-data:
+  ollama-models:

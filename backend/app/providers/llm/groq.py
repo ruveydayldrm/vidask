@@ -1,4 +1,4 @@
-﻿"""Groq (OpenAI-compatible chat completions API; free tier available)."""
+"""Groq (OpenAI-compatible chat completions API; free tier available)."""
 
 from __future__ import annotations
 

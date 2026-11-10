@@ -1,3 +1,5 @@
+import itertools
+
 from app.models.schemas import Segment
 from app.pipeline.chunking import chunk_segments, ends_sentence, normalize_segments
 
@@ -21,7 +23,7 @@ def test_covers_whole_transcript_with_overlap() -> None:
     chunks = chunk_segments(segs(120), "vid", target=45, overlap=10)
     assert chunks[0].start == 0
     assert chunks[-1].end == 600
-    for a, b in zip(chunks, chunks[1:], strict=False):
+    for a, b in itertools.pairwise(chunks):
         assert b.start < a.end, "consecutive chunks must overlap"
         assert a.end - b.start <= 15
         assert b.start > a.start, "chunks must advance"
@@ -47,7 +49,7 @@ def test_no_punctuation_still_chunks() -> None:
 
 def test_zero_overlap_partitions() -> None:
     chunks = chunk_segments(segs(60), "vid", target=30, overlap=0)
-    for a, b in zip(chunks, chunks[1:], strict=False):
+    for a, b in itertools.pairwise(chunks):
         assert b.start >= a.end
     assert " ".join(c.text for c in chunks).count("word") == 60
 

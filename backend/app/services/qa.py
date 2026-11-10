@@ -44,7 +44,8 @@ def full_context_blocks(transcript: Transcript, visual: list[Chunk]) -> list[Con
     )
     items = [ContextChunk(start=b.start, end=b.end, text=b.text, source=b.source) for b in blocks]
     items += [
-        ContextChunk(start=v.start, end=v.end, text=v.text, source=ChunkSource.VISUAL) for v in visual
+        ContextChunk(start=v.start, end=v.end, text=v.text, source=ChunkSource.VISUAL)
+        for v in visual
     ]
     return sorted(items, key=lambda c: c.start)
 
@@ -125,7 +126,9 @@ class QAService:
                 "reason": reason,
                 "provider": self.llm.name,
                 "model": self.llm.model,
-                "context": [c.model_dump(mode="json") for c in context] if strategy == "rag" else [],
+                "context": [c.model_dump(mode="json") for c in context]
+                if strategy == "rag"
+                else [],
             },
         }
 

@@ -1,4 +1,4 @@
-﻿"""Google Gemini via the public REST API (free tier available)."""
+"""Google Gemini via the public REST API (free tier available)."""
 
 from __future__ import annotations
 

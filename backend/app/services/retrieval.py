@@ -70,30 +70,47 @@ class HybridRetriever:
                     self._bm25.popitem(last=False)
             return self._bm25[key]
 
-    def retrieve(self, video_id: str, query: str, chunks: list[Chunk], top_k: int) -> RetrievalResult:
+    def retrieve(
+        self,
+        video_id: str,
+        query: str,
+        chunks: list[Chunk],
+        top_k: int,
+        *,
+        use_bm25: bool = True,
+        use_vector: bool = True,
+        use_reranker: bool = True,
+    ) -> RetrievalResult:
+        """Hybrid search. The ``use_*`` switches exist for ablation studies (eval/)."""
         timings: dict[str, int] = {}
         if not chunks:
             return RetrievalResult([], timings)
         key_of = {(c.source.value, c.idx): i for i, c in enumerate(chunks)}
 
-        t0 = time.perf_counter()
-        bm25 = self._bm25_for(video_id, chunks)
-        bm_scores = bm25.get_scores(bm25_tokenize(query) or ["_"])
-        bm_rank = sorted(range(len(chunks)), key=lambda i: bm_scores[i], reverse=True)
-        bm_rank = [i for i in bm_rank if bm_scores[i] > 0][: self.candidates]
-        timings["bm25"] = int((time.perf_counter() - t0) * 1000)
+        bm_rank: list[int] = []
+        if use_bm25:
+            t0 = time.perf_counter()
+            bm25 = self._bm25_for(video_id, chunks)
+            bm_scores = bm25.get_scores(bm25_tokenize(query) or ["_"])
+            bm_rank = sorted(range(len(chunks)), key=lambda i: bm_scores[i], reverse=True)
+            bm_rank = [i for i in bm_rank if bm_scores[i] > 0][: self.candidates]
+            timings["bm25"] = int((time.perf_counter() - t0) * 1000)
 
-        t0 = time.perf_counter()
-        qvec = self.embedder.embed_query(query)
-        hits = self.vectors.search(video_id, qvec, self.candidates)
-        vec_rank = [key_of[k] for h in hits if (k := (h.chunk.source.value, h.chunk.idx)) in key_of]
-        timings["vector"] = int((time.perf_counter() - t0) * 1000)
+        vec_rank: list[int] = []
+        if use_vector:
+            t0 = time.perf_counter()
+            qvec = self.embedder.embed_query(query)
+            hits = self.vectors.search(video_id, qvec, self.candidates)
+            vec_rank = [
+                key_of[k] for h in hits if (k := (h.chunk.source.value, h.chunk.idx)) in key_of
+            ]
+            timings["vector"] = int((time.perf_counter() - t0) * 1000)
 
-        fused = rrf_fuse([bm_rank, vec_rank])
+        fused = rrf_fuse([r for r in (bm_rank, vec_rank) if r])
         cand = sorted(fused, key=lambda i: fused[i], reverse=True)[: self.candidates]
         scores = {i: fused[i] for i in cand}
 
-        if self.reranker and cand:
+        if self.reranker and use_reranker and cand:
             t0 = time.perf_counter()
             rr = self.reranker.score(query, [chunks[i].text for i in cand])
             scores = dict(zip(cand, rr, strict=True))

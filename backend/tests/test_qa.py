@@ -44,7 +44,9 @@ async def test_full_context_answer_with_valid_and_fake_citations(transcript: Tra
     assert "What is a decorator?" in prompt
 
 
-@pytest.mark.parametrize("reply", ["NO_ANSWER", "  NO_ANSWER.", "`NO_ANSWER`", "NO_ANSWER\nThe video..."])
+@pytest.mark.parametrize(
+    "reply", ["NO_ANSWER", "  NO_ANSWER.", "`NO_ANSWER`", "NO_ANSWER\nThe video..."]
+)
 async def test_abstention_is_localized(transcript: Transcript, reply: str) -> None:
     qa = QAService(get_settings(), FakeProvider(reply, chunk_size=2), retriever=None)
     events = await run(qa, transcript, "Videoda kuantum fiziğinden bahsediliyor mu?")
@@ -64,7 +66,10 @@ async def test_short_answer_that_looks_like_marker_prefix(transcript: Transcript
 async def test_history_is_sent(transcript: Transcript) -> None:
     llm = FakeProvider("ok [00:12]")
     qa = QAService(get_settings(), llm, retriever=None)
-    hist = [ChatTurn(role="user", content="first?"), ChatTurn(role="assistant", content="first answer")]
+    hist = [
+        ChatTurn(role="user", content="first?"),
+        ChatTurn(role="assistant", content="first answer"),
+    ]
     await run(qa, transcript, "and then?", history=hist)
     roles = [m.role for m in llm.calls[0]]
     assert roles == ["system", "user", "assistant", "user"]

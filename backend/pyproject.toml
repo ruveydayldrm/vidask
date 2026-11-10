@@ -51,6 +51,11 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "ASYNC"]
 ignore = ["RUF001", "RUF002", "RUF003", "B008"]
 
+[tool.ruff.lint.per-file-ignores]
+# Prompt templates are kept verbatim; wrapping would change what the model sees.
+"app/services/prompts.py" = ["E501"]
+"../eval/*.py" = ["E501"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"

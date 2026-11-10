@@ -10,7 +10,9 @@ from app.services.citations import (
 )
 
 CTX = [
-    ContextChunk(start=60, end=105, text="Decorators wrap functions.", source=ChunkSource.TRANSCRIPT),
+    ContextChunk(
+        start=60, end=105, text="Decorators wrap functions.", source=ChunkSource.TRANSCRIPT
+    ),
     ContextChunk(start=300, end=340, text="def foo(): pass", source=ChunkSource.VISUAL),
     ContextChunk(start=3700, end=3740, text="Late in the video.", source=ChunkSource.TRANSCRIPT),
 ]

@@ -52,9 +52,10 @@ class VectorStore:
                 self.collection,
                 vectors_config=models.VectorParams(size=self.dim, distance=models.Distance.COSINE),
             )
-            if not hasattr(self.client, "_client") or "Local" not in type(
-                self.client._client
-            ).__name__:
+            if (
+                not hasattr(self.client, "_client")
+                or "Local" not in type(self.client._client).__name__
+            ):
                 self.client.create_payload_index(
                     self.collection, "video_id", models.PayloadSchemaType.KEYWORD
                 )
