@@ -15,7 +15,8 @@ export function previewFromSegments(segments: Segment[], t: number, maxChars = 2
   if (!segments.length) return "";
   const i = Math.max(0, activeIndex(segments, t));
   let out = "";
-  for (let j = i; j < segments.length && out.length < maxChars; j++) out += (out ? " " : "") + segments[j]!.text;
+  for (let j = i; j < segments.length && out.length < maxChars; j++)
+    out += (out ? " " : "") + segments[j]!.text;
   return out.length > maxChars ? out.slice(0, maxChars).replace(/\s+\S*$/, "") + "…" : out;
 }
 
@@ -46,7 +47,7 @@ export function TimestampChip({
           onClick={() => player?.seekTo(seconds)}
           aria-label={`${visual ? t("chat.onScreen") + " · " : ""}Jump to ${label}`}
           className={cn(
-            "mx-0.5 inline-flex translate-y-[-1px] items-center gap-1 rounded-md px-1.5 py-px align-baseline font-mono text-[0.78em] font-medium tabular",
+            "tabular mx-0.5 inline-flex translate-y-[-1px] items-center gap-1 rounded-md px-1.5 py-px align-baseline font-mono text-[0.78em] font-medium",
             "transition-colors focus-visible:outline-2",
             visual
               ? "bg-visual-soft text-visual hover:bg-visual hover:text-white"
@@ -54,16 +55,20 @@ export function TimestampChip({
             className,
           )}
         >
-          {visual ? <ImageIcon className="size-3" aria-hidden /> : <Play className="size-2.5 fill-current" aria-hidden />}
+          {visual ? (
+            <ImageIcon className="size-3" aria-hidden />
+          ) : (
+            <Play className="size-2.5 fill-current" aria-hidden />
+          )}
           {label}
         </button>
       </TooltipTrigger>
       {preview && (
         <TooltipContent side="top" className="w-72">
-          <span className="mb-1.5 flex items-center gap-1.5 font-mono text-[11px] text-fg-subtle">
+          <span className="text-fg-subtle mb-1.5 flex items-center gap-1.5 font-mono text-[11px]">
             {visual ? `🖼 ${t("chat.onScreen")}` : label}
           </span>
-          <span className="block leading-relaxed text-fg-muted">“{preview}”</span>
+          <span className="text-fg-muted block leading-relaxed">“{preview}”</span>
         </TooltipContent>
       )}
     </Tooltip>

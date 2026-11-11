@@ -39,7 +39,10 @@ describe("url + sse helpers", () => {
   });
 
   it("parses SSE blocks", () => {
-    expect(parseEventBlock('event: token\ndata: {"text":"hi"}')).toEqual({ event: "token", data: '{"text":"hi"}' });
+    expect(parseEventBlock('event: token\ndata: {"text":"hi"}')).toEqual({
+      event: "token",
+      data: '{"text":"hi"}',
+    });
     expect(parseEventBlock(": ping")).toBeNull();
   });
 });

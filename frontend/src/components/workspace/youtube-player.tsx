@@ -73,7 +73,8 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       });
       timer = setInterval(() => {
         try {
-          if (player && typeof player.getCurrentTime === "function") setTime(player.getCurrentTime());
+          if (player && typeof player.getCurrentTime === "function")
+            setTime(player.getCurrentTime());
         } catch {
           /* player not ready */
         }
@@ -94,7 +95,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   }, [videoId, title, attach, setTime, setPlaying]);
 
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black shadow-card ring-1 ring-border">
+    <div className="shadow-card ring-border relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1">
       <div ref={hostRef} className="absolute inset-0 [&_iframe]:size-full" />
     </div>
   );

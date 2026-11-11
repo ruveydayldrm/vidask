@@ -11,7 +11,9 @@ export function formatTs(seconds: number): string {
 export function parseTs(label: string): number | null {
   const parts = label.trim().split(":").map(Number);
   if (parts.some((p) => Number.isNaN(p)) || parts.length < 2 || parts.length > 3) return null;
-  return parts.length === 2 ? parts[0]! * 60 + parts[1]! : parts[0]! * 3600 + parts[1]! * 60 + parts[2]!;
+  return parts.length === 2
+    ? parts[0]! * 60 + parts[1]!
+    : parts[0]! * 3600 + parts[1]! * 60 + parts[2]!;
 }
 
 export function formatDuration(seconds: number): string {

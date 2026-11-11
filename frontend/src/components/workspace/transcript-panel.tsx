@@ -31,8 +31,15 @@ export function TranscriptPanel({ data }: { data: TranscriptData }) {
   const [flashKey, setFlashKey] = useState<string | null>(null);
 
   const rows = useMemo<Row[]>(() => {
-    const r: Row[] = data.segments.map((s, i) => ({ key: `s${i}`, start: s.start, text: s.text, visual: false }));
-    data.visual.forEach((v, i) => r.push({ key: `v${i}`, start: v.start, text: v.text, visual: true }));
+    const r: Row[] = data.segments.map((s, i) => ({
+      key: `s${i}`,
+      start: s.start,
+      text: s.text,
+      visual: false,
+    }));
+    data.visual.forEach((v, i) =>
+      r.push({ key: `v${i}`, start: v.start, text: v.text, visual: true }),
+    );
     return r.sort((a, b) => a.start - b.start || Number(a.visual) - Number(b.visual));
   }, [data]);
 
@@ -50,7 +57,10 @@ export function TranscriptPanel({ data }: { data: TranscriptData }) {
     if (!key || !box) return;
     const el = box.querySelector<HTMLElement>(`[data-key="${key}"]`);
     if (!el) return;
-    box.scrollTo({ top: el.offsetTop - box.clientHeight / 3, behavior: smooth ? "smooth" : "auto" });
+    box.scrollTo({
+      top: el.offsetTop - box.clientHeight / 3,
+      behavior: smooth ? "smooth" : "auto",
+    });
   }, []);
 
   // follow playback
@@ -88,7 +98,10 @@ export function TranscriptPanel({ data }: { data: TranscriptData }) {
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex shrink-0 items-center gap-2 py-3">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-fg-subtle" aria-hidden />
+          <Search
+            className="text-fg-subtle pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2"
+            aria-hidden
+          />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -101,20 +114,40 @@ export function TranscriptPanel({ data }: { data: TranscriptData }) {
             }}
             placeholder={t("transcript.search")}
             aria-label={t("transcript.search")}
-            className="h-8 w-full rounded-lg border border-border bg-surface pr-24 pl-8 text-sm outline-none placeholder:text-fg-subtle focus:border-border-strong"
+            className="border-border bg-surface placeholder:text-fg-subtle focus:border-border-strong h-8 w-full rounded-lg border pr-24 pl-8 text-sm outline-none"
           />
           {query && (
             <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5">
-              <span className="px-1 font-mono text-[11px] text-fg-subtle tabular" aria-live="polite">
-                {matches.length ? `${matchCursor + 1}/${matches.length}` : t("transcript.noMatches")}
+              <span
+                className="text-fg-subtle tabular px-1 font-mono text-[11px]"
+                aria-live="polite"
+              >
+                {matches.length
+                  ? `${matchCursor + 1}/${matches.length}`
+                  : t("transcript.noMatches")}
               </span>
-              <button type="button" onClick={() => step(-1)} className="rounded p-0.5 text-fg-subtle hover:text-fg" aria-label="Previous match">
+              <button
+                type="button"
+                onClick={() => step(-1)}
+                className="text-fg-subtle hover:text-fg rounded p-0.5"
+                aria-label="Previous match"
+              >
                 <ChevronUp className="size-3.5" />
               </button>
-              <button type="button" onClick={() => step(1)} className="rounded p-0.5 text-fg-subtle hover:text-fg" aria-label="Next match">
+              <button
+                type="button"
+                onClick={() => step(1)}
+                className="text-fg-subtle hover:text-fg rounded p-0.5"
+                aria-label="Next match"
+              >
                 <ChevronDown className="size-3.5" />
               </button>
-              <button type="button" onClick={() => setQuery("")} className="rounded p-0.5 text-fg-subtle hover:text-fg" aria-label="Clear search">
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="text-fg-subtle hover:text-fg rounded p-0.5"
+                aria-label="Clear search"
+              >
                 <X className="size-3.5" />
               </button>
             </div>
@@ -140,7 +173,7 @@ export function TranscriptPanel({ data }: { data: TranscriptData }) {
         ref={containerRef}
         onWheel={() => follow && setFollow(false)}
         onTouchMove={() => follow && setFollow(false)}
-        className="scrollbar-thin relative min-h-0 flex-1 overflow-y-auto pr-1 pb-6"
+        className="relative min-h-0 flex-1 scrollbar-thin overflow-y-auto pr-1 pb-6"
       >
         <ol className="space-y-px">
           {rows.map((r) => (
@@ -188,13 +221,13 @@ const TranscriptRow = memo(function TranscriptRow({
           "group flex w-full gap-3 rounded-lg px-2 py-1.5 text-left text-sm leading-relaxed transition-colors",
           active ? "bg-surface-2 text-fg" : "text-fg-muted hover:bg-surface-2/60 hover:text-fg",
           flash && "animate-[flash_1.6s_ease-out]",
-          current && "ring-1 ring-accent/50",
-          row.visual && "my-1 border-l-2 border-visual/60 bg-visual-soft/40",
+          current && "ring-accent/50 ring-1",
+          row.visual && "border-visual/60 bg-visual-soft/40 my-1 border-l-2",
         )}
       >
         <span
           className={cn(
-            "mt-px w-12 shrink-0 font-mono text-[11.5px] tabular",
+            "tabular mt-px w-12 shrink-0 font-mono text-[11.5px]",
             active ? "text-accent-text" : "text-fg-subtle group-hover:text-fg-muted",
           )}
         >
@@ -202,12 +235,15 @@ const TranscriptRow = memo(function TranscriptRow({
         </span>
         <span className="min-w-0 flex-1">
           {row.visual && (
-            <span className="mr-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-visual">
+            <span className="text-visual mr-1.5 inline-flex items-center gap-1 text-[11px] font-medium">
               <ImageIcon className="size-3" aria-hidden />
               {onScreenLabel}
             </span>
           )}
-          <Highlighted text={row.visual ? row.text.replace(/^Ekranda\/On screen:\s*/, "") : row.text} query={query} />
+          <Highlighted
+            text={row.visual ? row.text.replace(/^Ekranda\/On screen:\s*/, "") : row.text}
+            query={query}
+          />
         </span>
       </button>
     </li>
@@ -224,7 +260,7 @@ function Highlighted({ text, query }: { text: string; query: string }) {
   while (idx !== -1) {
     parts.push(text.slice(i, idx));
     parts.push(
-      <mark key={idx} className="rounded-sm bg-accent-soft px-0.5 text-fg">
+      <mark key={idx} className="bg-accent-soft text-fg rounded-sm px-0.5">
         {text.slice(idx, idx + q.length)}
       </mark>,
     );

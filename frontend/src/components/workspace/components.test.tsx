@@ -56,7 +56,16 @@ describe("AnswerMarkdown", () => {
     wrap(
       <AnswerMarkdown
         content="See the slide [02:00]."
-        citations={[{ label: "02:00", seconds: 120, chunk_start: 120, chunk_end: 140, source: "visual", preview: "def foo()" }]}
+        citations={[
+          {
+            label: "02:00",
+            seconds: 120,
+            chunk_start: 120,
+            chunk_end: 140,
+            source: "visual",
+            preview: "def foo()",
+          },
+        ]}
       />,
     );
     expect(screen.getByRole("button", { name: /shown on screen/i })).toBeInTheDocument();
@@ -92,7 +101,14 @@ describe("ChatPanel", () => {
         role: "assistant",
         content: "This topic isn't covered in the video.",
         status: "done",
-        result: { answer: "This topic isn't covered in the video.", citations: [], abstained: true, strategy: "full", removed_citations: [], latency_ms: 900 },
+        result: {
+          answer: "This topic isn't covered in the video.",
+          citations: [],
+          abstained: true,
+          strategy: "full",
+          removed_citations: [],
+          latency_ms: 900,
+        },
       },
     ]);
     wrap(<ChatPanel chat={chat} suggestions={[]} />);

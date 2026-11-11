@@ -24,7 +24,11 @@ export function useChat(videoId: string, lang: Lang) {
         .map((m) => ({ role: m.role, content: m.result?.answer ?? m.content }));
       const userMsg: ChatMessage = { id: uid(), role: "user", content: q };
       const botId = uid();
-      setMessages((prev) => [...prev, userMsg, { id: botId, role: "assistant", content: "", status: "streaming" }]);
+      setMessages((prev) => [
+        ...prev,
+        userMsg,
+        { id: botId, role: "assistant", content: "", status: "streaming" },
+      ]);
       setBusy(true);
       const ctrl = new AbortController();
       abortRef.current = ctrl;
@@ -34,7 +38,10 @@ export function useChat(videoId: string, lang: Lang) {
         for await (const ev of events) {
           const data = JSON.parse(ev.data);
           if (ev.event === "meta") {
-            patch(botId, (m) => ({ ...m, meta: { strategy: data.strategy, model: data.model, provider: data.provider } }));
+            patch(botId, (m) => ({
+              ...m,
+              meta: { strategy: data.strategy, model: data.model, provider: data.provider },
+            }));
           } else if (ev.event === "token") {
             patch(botId, (m) => ({ ...m, content: m.content + data.text }));
           } else if (ev.event === "done") {
@@ -53,7 +60,9 @@ export function useChat(videoId: string, lang: Lang) {
         }
       } finally {
         setMessages((prev) =>
-          prev.map((m) => (m.id === botId && m.status === "streaming" ? { ...m, status: "done" } : m)),
+          prev.map((m) =>
+            m.id === botId && m.status === "streaming" ? { ...m, status: "done" } : m,
+          ),
         );
         setBusy(false);
         abortRef.current = null;

@@ -55,7 +55,15 @@ function WorkspaceInner({ record }: { record: VideoRecord }) {
         setTranscript(d);
         setSegments(d.segments);
       })
-      .catch(() => setTranscript({ video_id: record.meta.video_id, language: null, source: "auto_captions", segments: [], visual: [] }));
+      .catch(() =>
+        setTranscript({
+          video_id: record.meta.video_id,
+          language: null,
+          source: "auto_captions",
+          segments: [],
+          visual: [],
+        }),
+      );
   }, [record.meta.video_id, setSegments]);
 
   useEffect(() => {
@@ -89,27 +97,37 @@ function WorkspaceInner({ record }: { record: VideoRecord }) {
       className="mx-auto grid max-w-[1600px] grid-cols-1 lg:h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(0,1.2fr)_minmax(380px,0.8fr)]"
     >
       {/* left column */}
-      <div className="flex min-h-0 flex-col lg:border-r lg:border-border">
-        <div className="sticky top-14 z-20 bg-bg px-0 pt-0 sm:px-6 sm:pt-5 lg:static">
+      <div className="lg:border-border flex min-h-0 flex-col lg:border-r">
+        <div className="bg-bg sticky top-14 z-20 px-0 pt-0 sm:px-6 sm:pt-5 lg:static">
           <YouTubePlayer videoId={record.meta.video_id} title={record.meta.title} />
         </div>
         <div className="px-4 pt-4 sm:px-6">
-          <h1 className="text-lg leading-snug font-semibold tracking-tight text-balance">{record.meta.title}</h1>
-          <p className="mt-1 flex items-center gap-2 text-sm text-fg-muted">
+          <h1 className="text-lg leading-snug font-semibold tracking-tight text-balance">
+            {record.meta.title}
+          </h1>
+          <p className="text-fg-muted mt-1 flex items-center gap-2 text-sm">
             <span className="truncate">{record.meta.channel}</span>
-            {record.meta.duration > 0 && <span className="font-mono text-xs tabular">· {formatDuration(record.meta.duration)}</span>}
+            {record.meta.duration > 0 && (
+              <span className="tabular font-mono text-xs">
+                · {formatDuration(record.meta.duration)}
+              </span>
+            )}
             <a
               href={record.meta.url}
               target="_blank"
               rel="noreferrer"
-              className="ml-auto inline-flex items-center gap-1 rounded text-xs text-fg-subtle hover:text-fg"
+              className="text-fg-subtle hover:text-fg ml-auto inline-flex items-center gap-1 rounded text-xs"
             >
               YouTube <ExternalLink className="size-3" aria-hidden />
             </a>
           </p>
         </div>
 
-        <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col px-4 pt-3 sm:px-6">
+        <Tabs
+          value={tab}
+          onValueChange={setTab}
+          className="flex min-h-0 flex-1 flex-col px-4 pt-3 sm:px-6"
+        >
           <TabsList className="shrink-0 overflow-x-auto">
             {!desktop && (
               <TabsTrigger value="chat">
@@ -131,10 +149,10 @@ function WorkspaceInner({ record }: { record: VideoRecord }) {
               {chatPanel}
             </TabsContent>
           )}
-          <TabsContent value="summary" className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
+          <TabsContent value="summary" className="min-h-0 flex-1 scrollbar-thin overflow-y-auto">
             <SummaryPanel record={record} />
           </TabsContent>
-          <TabsContent value="chapters" className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
+          <TabsContent value="chapters" className="min-h-0 flex-1 scrollbar-thin overflow-y-auto">
             <ChaptersPanel record={record} />
           </TabsContent>
           <TabsContent
@@ -160,7 +178,7 @@ function WorkspaceInner({ record }: { record: VideoRecord }) {
       </div>
 
       {/* right column */}
-      {desktop && <aside className="min-h-0 bg-bg-subtle/50">{chatPanel}</aside>}
+      {desktop && <aside className="bg-bg-subtle/50 min-h-0">{chatPanel}</aside>}
     </motion.div>
   );
 }
