@@ -1,7 +1,18 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, CircleDashed, FileText, Film, ImageIcon, Layers, Loader2, Minus, Sparkles, X } from "lucide-react";
+import {
+  Check,
+  CircleDashed,
+  FileText,
+  Film,
+  ImageIcon,
+  Layers,
+  Loader2,
+  Minus,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { api } from "@/lib/api";
@@ -49,7 +60,10 @@ export function ProcessingView({
     let poll: ReturnType<typeof setInterval> | undefined;
     const handle = (j: Job) => {
       setJob(j);
-      if (j.status === "ready") {
+      // The video is searchable once insights start; those finish in the background.
+      const chatReady = j.stages.some((s) => s.stage === "insights" && s.status === "running");
+      if (closed) return;
+      if (j.status === "ready" || chatReady) {
         closed = true;
         setTimeout(onDone, 500);
       } else if (j.status === "failed") {
@@ -64,7 +78,14 @@ export function ProcessingView({
       es.close();
       if (closed || poll) return;
       // Fallback to polling if the stream drops (proxies, sleep, etc.)
-      poll = setInterval(() => api.job(jobId).then(handle).catch(() => undefined), 1500);
+      poll = setInterval(
+        () =>
+          api
+            .job(jobId)
+            .then(handle)
+            .catch(() => undefined),
+        1500,
+      );
     };
     return () => {
       closed = true;
@@ -77,30 +98,55 @@ export function ProcessingView({
 
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-2xl flex-col justify-center px-4 py-12">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-border bg-surface p-5 shadow-card sm:p-7">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="border-border bg-surface shadow-card rounded-3xl border p-5 sm:p-7"
+      >
         <div className="flex items-center gap-4">
-          <div className="relative aspect-video w-36 shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:w-44">
+          <div className="bg-surface-2 relative aspect-video w-36 shrink-0 overflow-hidden rounded-xl sm:w-44">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={meta.thumbnail || `https://i.ytimg.com/vi/${meta.video_id}/hqdefault.jpg`} alt="" className="size-full object-cover" />
+            <img
+              src={meta.thumbnail || `https://i.ytimg.com/vi/${meta.video_id}/hqdefault.jpg`}
+              alt=""
+              className="size-full object-cover"
+            />
             <div className="absolute inset-0 bg-black/20" />
-            <div className="absolute inset-x-0 top-0 h-[10%] animate-scan bg-gradient-to-b from-transparent via-accent/70 to-transparent blur-[1px]" aria-hidden />
+            <div
+              className="animate-scan via-accent/70 absolute inset-x-0 top-0 h-[10%] bg-gradient-to-b from-transparent to-transparent blur-[1px]"
+              aria-hidden
+            />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium tracking-wide text-accent-text uppercase">{t("processing.title")}</p>
-            <h1 className="mt-1 line-clamp-2 leading-snug font-semibold tracking-tight">{meta.title || meta.video_id}</h1>
-            <p className="mt-0.5 truncate text-sm text-fg-muted">{meta.channel}</p>
+            <p className="text-accent-text text-xs font-medium tracking-wide uppercase">
+              {t("processing.title")}
+            </p>
+            <h1 className="mt-1 line-clamp-2 leading-snug font-semibold tracking-tight">
+              {meta.title || meta.video_id}
+            </h1>
+            <p className="text-fg-muted mt-0.5 truncate text-sm">{meta.channel}</p>
           </div>
         </div>
 
         <div className="mt-6">
           <div className="mb-2 flex items-baseline justify-between text-xs">
-            <span className="font-mono text-2xl font-semibold tracking-tight tabular">{pct}%</span>
-            <span className="font-mono text-fg-subtle tabular">
+            <span className="tabular font-mono text-2xl font-semibold tracking-tight">{pct}%</span>
+            <span className="text-fg-subtle tabular font-mono">
               {t("processing.elapsed")} {formatTs(elapsed)}
             </span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-            <motion.div className="h-full rounded-full bg-accent" animate={{ width: `${pct}%` }} transition={{ ease: "easeOut", duration: 0.5 }} />
+          <div
+            className="bg-surface-2 h-1.5 overflow-hidden rounded-full"
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <motion.div
+              className="bg-accent h-full rounded-full"
+              animate={{ width: `${pct}%` }}
+              transition={{ ease: "easeOut", duration: 0.5 }}
+            />
           </div>
         </div>
 
@@ -117,7 +163,7 @@ export function ProcessingView({
                   (s.status === "pending" || s.status === "skipped") && "opacity-55",
                 )}
               >
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-border bg-surface text-fg-muted">
+                <span className="border-border bg-surface text-fg-muted grid size-8 shrink-0 place-items-center rounded-lg border">
                   <Icon className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -128,14 +174,16 @@ export function ProcessingView({
                       initial={{ opacity: 0, y: 3 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="truncate text-xs text-fg-muted"
+                      className="text-fg-muted truncate text-xs"
                     >
                       {s.status === "skipped" ? t("stage.skipped") : s.message || " "}
                     </motion.p>
                   </AnimatePresence>
                 </div>
                 {running && s.progress > 0 && (
-                  <span className="font-mono text-xs text-fg-subtle tabular">{Math.round(s.progress * 100)}%</span>
+                  <span className="text-fg-subtle tabular font-mono text-xs">
+                    {Math.round(s.progress * 100)}%
+                  </span>
                 )}
                 <StatusIcon status={s.status} />
               </li>
@@ -144,20 +192,27 @@ export function ProcessingView({
         </ol>
       </motion.div>
 
-      <div className="mt-6 h-10 text-center text-sm text-fg-muted" aria-live="polite">
+      <div className="text-fg-muted mt-6 h-10 text-center text-sm" aria-live="polite">
         <AnimatePresence mode="wait">
-          <motion.p key={tip} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}>
+          <motion.p
+            key={tip}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+          >
             <span className="mr-1.5">💡</span>
             {t(`tips.${tip}` as TKey)}
           </motion.p>
         </AnimatePresence>
       </div>
-      <p className="text-center text-xs text-fg-subtle">{t("processing.subtitle")}</p>
+      <p className="text-fg-subtle text-center text-xs">{t("processing.subtitle")}</p>
     </div>
   );
 }
 
-const DEFAULT_STAGES: Job["stages"] = (["metadata", "transcript", "vision", "indexing", "insights"] as Stage[]).map((stage) => ({
+const DEFAULT_STAGES: Job["stages"] = (
+  ["metadata", "transcript", "vision", "indexing", "insights"] as Stage[]
+).map((stage) => ({
   stage,
   status: "pending",
   progress: 0,
@@ -168,11 +223,15 @@ function StatusIcon({ status }: { status: Job["stages"][number]["status"] }) {
   const base = "size-5 shrink-0";
   if (status === "done")
     return (
-      <motion.span initial={{ scale: 0.4 }} animate={{ scale: 1 }} className="grid size-5 place-items-center rounded-full bg-success text-white">
+      <motion.span
+        initial={{ scale: 0.4 }}
+        animate={{ scale: 1 }}
+        className="bg-success grid size-5 place-items-center rounded-full text-white"
+      >
         <Check className="size-3" strokeWidth={3} />
       </motion.span>
     );
-  if (status === "running") return <Loader2 className={cn(base, "animate-spin text-accent")} />;
+  if (status === "running") return <Loader2 className={cn(base, "text-accent animate-spin")} />;
   if (status === "failed") return <X className={cn(base, "text-danger")} />;
   if (status === "skipped") return <Minus className={cn(base, "text-fg-subtle")} />;
   return <CircleDashed className={cn(base, "text-fg-subtle")} />;

@@ -11,6 +11,7 @@ from app.models.schemas import Chapter, Insights, Transcript
 from app.pipeline.chunking import chunk_segments
 from app.providers.llm import LLMProvider, Message, estimate_tokens
 from app.services.citations import SINGLE_TS_RE, format_ts, parse_ts
+from app.services.llm_gate import background_complete
 from app.services.prompts import insights_prompt, notes_prompt
 
 log = get_logger(__name__)
@@ -100,8 +101,8 @@ async def _condense(llm: LLMProvider, lang: str, lines: list[str], budget: int) 
         used += t
     notes: list[str] = []
     for i, w in enumerate(windows):
-        out = await llm.complete(
-            [Message("user", notes_prompt(lang, "\n".join(w)))], max_tokens=600
+        out = await background_complete(
+            llm, [Message("user", notes_prompt(lang, "\n".join(w)))], max_tokens=600
         )
         notes.extend(ln.strip() for ln in out.splitlines() if ln.strip())
         log.info("insights.condensed_window", window=i + 1, of=len(windows))
@@ -127,7 +128,9 @@ async def generate_insights(
     prompt = insights_prompt(lang, title, "\n".join(lines), format_ts(duration), n_chapters)
     last_err: Exception | None = None
     for attempt in range(2):
-        out = await llm.complete([Message("user", prompt)], json_mode=True, max_tokens=900)
+        out = await background_complete(
+            llm, [Message("user", prompt)], json_mode=True, max_tokens=900
+        )
         try:
             data = extract_json(out)
             questions = [str(q).strip() for q in data.get("questions", []) if str(q).strip()]

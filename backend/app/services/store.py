@@ -198,7 +198,11 @@ class Store:
                 job.error_code = "interrupted"
                 self.save_job(job)
                 rec = self.get_video(job.video_id)
-                if rec and rec.status != VideoStatus.READY:
+                if rec and rec.status == VideoStatus.READY and rec.insights_pending:
+                    # Interrupted while writing the summary; the video itself is usable.
+                    rec.insights_pending = False
+                    self.upsert_video(rec)
+                elif rec and rec.status != VideoStatus.READY:
                     rec.status = VideoStatus.FAILED
                     rec.error = job.error
                     self.upsert_video(rec)

@@ -98,6 +98,7 @@ def test_process_then_cache_then_chat(client: TestClient) -> None:
     video = client.get(f"/api/videos/{VID}").json()
     assert video["meta"]["title"] == "Decorators"
     assert video["transcript_source"] == "manual_captions"
+    assert video["status"] == "ready" and video["insights_pending"] is False
     assert client.get("/api/videos").json()[0]["meta"]["video_id"] == VID
 
     tr = client.get(f"/api/videos/{VID}/transcript").json()

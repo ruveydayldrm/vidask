@@ -31,6 +31,7 @@ export interface VideoRecord {
   transcript_source: TranscriptSource | null;
   vision_used: boolean;
   insights: Insights | null;
+  insights_pending?: boolean;
   error: string | null;
   latest_job_id: string | null;
   updated_at: string;

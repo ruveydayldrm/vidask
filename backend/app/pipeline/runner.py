@@ -197,6 +197,10 @@ def process_video(job_id: str, video_id: str, vision: bool, force: bool = False)
         vs.delete_video(video_id)
         vs.upsert(all_chunks, vectors)
         store.save_chunks(video_id, all_chunks)
+        # Searchable now: open chat while summary/chapters are written in the background.
+        rec.status = VideoStatus.READY
+        rec.insights_pending = settings.insights_enabled
+        store.upsert_video(rec)
         rep.finish(stage, f"{len(chunks)} passages indexed")
 
         # 5. insights ---------------------------------------------------------
@@ -218,7 +222,7 @@ def process_video(job_id: str, video_id: str, vision: bool, force: bool = False)
         else:
             rep.finish(stage, "Disabled", skipped=True)
 
-        rec.status = VideoStatus.READY
+        rec.insights_pending = False
         store.upsert_video(rec)
         rep.complete()
         log.info(
@@ -235,6 +239,10 @@ def process_video(job_id: str, video_id: str, vision: bool, force: bool = False)
         log.exception("job.failed", job_id=job_id, stage=stage, code=code)
         rep.fail(stage, message, code)
         failed = store.get_video(video_id)
-        if failed:
+        if failed and failed.status == VideoStatus.READY and failed.insights_pending:
+            # Already indexed and chat-able; only the summary is lost.
+            failed.insights_pending = False
+            store.upsert_video(failed)
+        elif failed:
             failed.status, failed.error = VideoStatus.FAILED, message
             store.upsert_video(failed)

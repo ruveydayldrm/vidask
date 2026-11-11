@@ -35,7 +35,12 @@ export function VideoView({ id, jobParam }: { id: string; jobParam?: string }) {
       const err = e as ApiError;
       setState({
         kind: "error",
-        message: err.code === "network_error" ? t("error.network") : err.status === 404 ? t("error.notFound") : err.message,
+        message:
+          err.code === "network_error"
+            ? t("error.network")
+            : err.status === 404
+              ? t("error.notFound")
+              : err.message,
       });
     }
   }, [id, jobParam, t]);
@@ -43,6 +48,21 @@ export function VideoView({ id, jobParam }: { id: string; jobParam?: string }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Summary/chapters are still being written: refresh the record until they land.
+  const pending = state.kind === "ready" && state.record.insights_pending;
+  useEffect(() => {
+    if (!pending) return;
+    const timer = setInterval(async () => {
+      try {
+        const record = await api.video(id);
+        if (!record.insights_pending) setState({ kind: "ready", record });
+      } catch {
+        // transient; try again on the next tick
+      }
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [pending, id]);
 
   const onFailed = useCallback((job: Job) => {
     setState((s) => ({
@@ -66,17 +86,26 @@ export function VideoView({ id, jobParam }: { id: string; jobParam?: string }) {
 
   if (state.kind === "loading") return <WorkspaceSkeleton />;
   if (state.kind === "processing")
-    return <ProcessingView jobId={state.jobId} meta={state.record.meta} onDone={load} onFailed={onFailed} />;
+    return (
+      <ProcessingView
+        jobId={state.jobId}
+        meta={state.record.meta}
+        onDone={load}
+        onFailed={onFailed}
+      />
+    );
   if (state.kind === "ready") return <Workspace record={state.record} />;
 
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-md flex-col items-center justify-center px-4 text-center">
-      <div className="mb-5 grid size-12 place-items-center rounded-2xl bg-danger-soft text-danger">
+      <div className="bg-danger-soft text-danger mb-5 grid size-12 place-items-center rounded-2xl">
         <AlertTriangle className="size-5" aria-hidden />
       </div>
       <h1 className="text-lg font-semibold tracking-tight">{t("processing.failed")}</h1>
-      {state.record?.meta.title && <p className="mt-1 text-sm font-medium text-fg-muted">{state.record.meta.title}</p>}
-      <p role="alert" className="mt-3 text-sm leading-relaxed text-fg-muted">
+      {state.record?.meta.title && (
+        <p className="text-fg-muted mt-1 text-sm font-medium">{state.record.meta.title}</p>
+      )}
+      <p role="alert" className="text-fg-muted mt-3 text-sm leading-relaxed">
         {state.message}
       </p>
       <div className="mt-6 flex gap-2">
@@ -95,7 +124,10 @@ export function VideoView({ id, jobParam }: { id: string; jobParam?: string }) {
 
 function WorkspaceSkeleton() {
   return (
-    <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(380px,0.8fr)]" aria-busy>
+    <div
+      className="mx-auto grid max-w-[1600px] grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(380px,0.8fr)]"
+      aria-busy
+    >
       <div className="space-y-4">
         <Skeleton className="aspect-video w-full rounded-xl" />
         <Skeleton className="h-6 w-2/3" />

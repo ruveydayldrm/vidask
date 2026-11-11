@@ -25,6 +25,7 @@ from app.pipeline.metadata import fetch_metadata
 from app.pipeline.url import extract_video_id
 from app.services.container import get_llm, get_retriever, get_store
 from app.services.jobs import get_queue
+from app.services.llm_gate import gate as llm_gate
 from app.services.qa import QAService
 
 log = get_logger(__name__)
@@ -161,8 +162,13 @@ async def chat(video_id: str, req: ChatRequest) -> EventSourceResponse:
 
     async def gen() -> AsyncIterator[dict[str, str]]:
         try:
-            async for ev in qa.stream_answer(transcript, chunks, rec.meta.title, req):
-                yield {"event": ev["event"], "data": json.dumps(ev["data"], ensure_ascii=False)}
+            # Background summary work pauses while a question is being answered.
+            with llm_gate.interactive():
+                async for ev in qa.stream_answer(transcript, chunks, rec.meta.title, req):
+                    yield {
+                        "event": ev["event"],
+                        "data": json.dumps(ev["data"], ensure_ascii=False),
+                    }
         except VidAskError as exc:
             yield {"event": "error", "data": json.dumps({"code": exc.code, "message": exc.message})}
         except Exception as exc:

@@ -123,6 +123,8 @@ class VideoRecord(BaseModel):
     transcript_source: TranscriptSource | None = None
     vision_used: bool = False
     insights: Insights | None = None
+    # Ready for chat while summary/chapters are still being generated.
+    insights_pending: bool = False
     error: str | None = None
     latest_job_id: str | None = None
     created_at: datetime = Field(default_factory=utcnow)

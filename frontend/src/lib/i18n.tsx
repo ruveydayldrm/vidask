@@ -41,6 +41,8 @@ const en = {
   "tabs.transcript": "Transcript",
   "tabs.chat": "Chat",
   "summary.empty": "No summary was generated for this video.",
+  "summary.pending":
+    "Writing the summary and chapters in the background — you can already ask questions.",
   "summary.source": "Transcript source",
   "summary.language": "Language",
   "summary.vision": "On-screen analysis",
@@ -74,9 +76,11 @@ const en = {
   "settings.provider": "LLM provider",
   "settings.model": "Model",
   "settings.vision": "On-screen analysis (OCR)",
-  "settings.visionHint": "Reads slides and code from scene changes. Slower on CPU; applies to new videos.",
+  "settings.visionHint":
+    "Reads slides and code from scene changes. Slower on CPU; applies to new videos.",
   "settings.reranker": "Reranker",
-  "settings.rerankerHint": "Cross-encoder reranking for long videos. Better answers, slightly slower.",
+  "settings.rerankerHint":
+    "Cross-encoder reranking for long videos. Better answers, slightly slower.",
   "settings.noKey": "No API key configured",
   "settings.save": "Save",
   "settings.saved": "Saved",
@@ -131,6 +135,7 @@ const tr: Record<keyof typeof en, string> = {
   "tabs.transcript": "Transkript",
   "tabs.chat": "Sohbet",
   "summary.empty": "Bu video için özet oluşturulamadı.",
+  "summary.pending": "Özet ve bölümler arka planda hazırlanıyor — şimdiden soru sorabilirsiniz.",
   "summary.source": "Transkript kaynağı",
   "summary.language": "Dil",
   "summary.vision": "Ekran analizi",
@@ -151,7 +156,8 @@ const tr: Record<keyof typeof en, string> = {
   "chat.stop": "Durdur",
   "chat.suggested": "Önerilen sorular",
   "chat.emptyTitle": "Ne öğrenmek istersiniz?",
-  "chat.emptyBody": "Cevaplar bilginin geçtiği anı gösterir. O ana gitmek için zaman damgasına tıklayın.",
+  "chat.emptyBody":
+    "Cevaplar bilginin geçtiği anı gösterir. O ana gitmek için zaman damgasına tıklayın.",
   "chat.thinking": "Video okunuyor…",
   "chat.sources": "Kaynaklar",
   "chat.strategy.full": "Tüm transkript",
@@ -167,7 +173,8 @@ const tr: Record<keyof typeof en, string> = {
   "settings.visionHint":
     "Sahne değişimlerinde slayt ve kodları okur. CPU'da yavaştır; yeni videolara uygulanır.",
   "settings.reranker": "Yeniden sıralayıcı",
-  "settings.rerankerHint": "Uzun videolarda cross-encoder ile yeniden sıralama. Daha iyi cevap, biraz daha yavaş.",
+  "settings.rerankerHint":
+    "Uzun videolarda cross-encoder ile yeniden sıralama. Daha iyi cevap, biraz daha yavaş.",
   "settings.noKey": "API anahtarı tanımlı değil",
   "settings.save": "Kaydet",
   "settings.saved": "Kaydedildi",
