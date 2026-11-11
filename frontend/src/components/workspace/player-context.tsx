@@ -20,6 +20,9 @@ interface PlayerContextValue {
   /** Bumped on every explicit jump so the transcript can scroll + flash the line. */
   jump: { t: number; nonce: number } | null;
   segments: Segment[];
+  /** The owner disabled embedding: timestamps open YouTube in a new tab instead. */
+  embedBlocked: boolean;
+  setEmbedBlocked: (b: boolean) => void;
   seekTo: (t: number, opts?: { play?: boolean }) => void;
   togglePlay: () => void;
   nudge: (delta: number) => void;
@@ -32,27 +35,47 @@ interface PlayerContextValue {
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 
-export function PlayerProvider({ children }: { children: React.ReactNode }) {
+export function youtubeUrlAt(videoId: string, t: number): string {
+  return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&t=${Math.max(0, Math.floor(t))}s`;
+}
+
+export function PlayerProvider({
+  children,
+  videoId,
+}: {
+  children: React.ReactNode;
+  videoId?: string;
+}) {
   const playerRef = useRef<YTPlayerLike | null>(null);
   const [currentTime, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
   const [jump, setJump] = useState<PlayerContextValue["jump"]>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [embedBlocked, setEmbedBlocked] = useState(false);
 
   const attach = useCallback((p: YTPlayerLike | null) => {
     playerRef.current = p;
     setReady(Boolean(p));
   }, []);
 
-  const seekTo = useCallback((t: number, opts: { play?: boolean } = { play: true }) => {
-    const p = playerRef.current;
-    setJump({ t, nonce: Date.now() });
-    setTime(t);
-    if (!p) return;
-    p.seekTo(Math.max(0, t), true);
-    if (opts.play !== false) p.playVideo();
-  }, []);
+  const seekTo = useCallback(
+    (t: number, opts: { play?: boolean } = { play: true }) => {
+      setJump({ t, nonce: Date.now() });
+      setTime(t);
+      if (embedBlocked) {
+        // Called from click handlers, so the browser allows the new tab.
+        if (videoId && opts.play !== false)
+          window.open(youtubeUrlAt(videoId, t), "_blank", "noopener");
+        return;
+      }
+      const p = playerRef.current;
+      if (!p) return;
+      p.seekTo(Math.max(0, t), true);
+      if (opts.play !== false) p.playVideo();
+    },
+    [embedBlocked, videoId],
+  );
 
   const togglePlay = useCallback(() => {
     const p = playerRef.current;
@@ -76,6 +99,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       ready,
       jump,
       segments,
+      embedBlocked,
+      setEmbedBlocked,
       seekTo,
       togglePlay,
       nudge,
@@ -84,7 +109,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setPlaying,
       setSegments,
     }),
-    [currentTime, playing, ready, jump, segments, seekTo, togglePlay, nudge, attach],
+    [currentTime, playing, ready, jump, segments, embedBlocked, seekTo, togglePlay, nudge, attach],
   );
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }

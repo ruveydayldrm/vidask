@@ -1,8 +1,11 @@
 "use client";
 
+import { ExternalLink } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-import { usePlayer, type YTPlayerLike } from "./player-context";
+import { useI18n } from "@/lib/i18n";
+
+import { usePlayer, youtubeUrlAt, type YTPlayerLike } from "./player-context";
 
 declare global {
   interface Window {
@@ -16,6 +19,7 @@ declare global {
           events?: {
             onReady?: (e: { target: YTPlayerLike }) => void;
             onStateChange?: (e: { data: number; target: YTPlayerLike }) => void;
+            onError?: (e: { data: number }) => void;
           };
         },
       ) => YTPlayerLike & { destroy(): void };
@@ -44,9 +48,13 @@ function loadYouTubeApi(): Promise<void> {
   return apiPromise;
 }
 
+/** IFrame API error codes meaning "the owner does not allow playback in embeds". */
+const EMBED_BLOCKED = new Set([101, 150, 153]);
+
 export function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const { attach, setTime, setPlaying } = usePlayer();
+  const { attach, setTime, setPlaying, embedBlocked, setEmbedBlocked } = usePlayer();
+  const { t } = useI18n();
 
   useEffect(() => {
     let player: (YTPlayerLike & { destroy(): void }) | null = null;
@@ -69,6 +77,9 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
             iframe?.setAttribute("title", title);
           },
           onStateChange: (e) => setPlaying(e.data === 1),
+          onError: (e) => {
+            if (EMBED_BLOCKED.has(e.data)) setEmbedBlocked(true);
+          },
         },
       });
       timer = setInterval(() => {
@@ -92,11 +103,33 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       }
       if (host) host.innerHTML = "";
     };
-  }, [videoId, title, attach, setTime, setPlaying]);
+  }, [videoId, title, attach, setTime, setPlaying, setEmbedBlocked]);
 
   return (
     <div className="shadow-card ring-border relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1">
       <div ref={hostRef} className="absolute inset-0 [&_iframe]:size-full" />
+      {embedBlocked && (
+        <div
+          role="status"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[radial-gradient(ellipse_at_center,oklch(0.25_0.02_40),oklch(0.12_0_0))] px-6 text-center text-white"
+        >
+          <span className="grid size-11 place-items-center rounded-2xl bg-white/10">
+            <ExternalLink className="size-5" aria-hidden />
+          </span>
+          <p className="text-base font-semibold tracking-tight">{t("player.blockedTitle")}</p>
+          <p className="max-w-md text-sm leading-relaxed text-white/70">
+            {t("player.blockedBody")}
+          </p>
+          <a
+            href={youtubeUrlAt(videoId, 0)}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90"
+          >
+            {t("player.openYoutube")} <ExternalLink className="size-3.5" aria-hidden />
+          </a>
+        </div>
+      )}
     </div>
   );
 }

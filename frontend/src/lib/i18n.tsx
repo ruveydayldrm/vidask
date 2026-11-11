@@ -40,6 +40,10 @@ const en = {
   "tabs.chapters": "Chapters",
   "tabs.transcript": "Transcript",
   "tabs.chat": "Chat",
+  "player.blockedTitle": "This video can only be played on YouTube",
+  "player.blockedBody":
+    "The owner turned off playback on other sites. Q&A still works — timestamps open YouTube at that second.",
+  "player.openYoutube": "Watch on YouTube",
   "summary.empty": "No summary was generated for this video.",
   "summary.pending":
     "Writing the summary and chapters in the background — you can already ask questions.",
@@ -134,6 +138,10 @@ const tr: Record<keyof typeof en, string> = {
   "tabs.chapters": "Bölümler",
   "tabs.transcript": "Transkript",
   "tabs.chat": "Sohbet",
+  "player.blockedTitle": "Bu video yalnızca YouTube'da oynatılabiliyor",
+  "player.blockedBody":
+    "Video sahibi başka sitelerde oynatmayı kapatmış. Soru-cevap yine çalışır; zaman damgaları videoyu YouTube'da o saniyeden açar.",
+  "player.openYoutube": "YouTube'da izle",
   "summary.empty": "Bu video için özet oluşturulamadı.",
   "summary.pending": "Özet ve bölümler arka planda hazırlanıyor — şimdiden soru sorabilirsiniz.",
   "summary.source": "Transkript kaynağı",

@@ -33,7 +33,7 @@ function useIsDesktop() {
 
 export function Workspace({ record }: { record: VideoRecord }) {
   return (
-    <PlayerProvider>
+    <PlayerProvider videoId={record.meta.video_id}>
       <WorkspaceInner record={record} />
     </PlayerProvider>
   );

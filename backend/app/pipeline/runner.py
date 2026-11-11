@@ -139,7 +139,11 @@ def process_video(job_id: str, video_id: str, vision: bool, force: bool = False)
         transcript = None if force else store.get_transcript(video_id)
         if transcript is None:
             transcript = get_transcript(
-                video_id, settings, meta.duration, lambda f, m: rep.update(Stage.TRANSCRIPT, f, m)
+                video_id,
+                settings,
+                meta.duration,
+                lambda f, m: rep.update(Stage.TRANSCRIPT, f, m),
+                spoken_hint=meta.language,
             )
             store.save_transcript(transcript)
         rec.transcript_source = transcript.source

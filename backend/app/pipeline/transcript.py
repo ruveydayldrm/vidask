@@ -27,13 +27,40 @@ def _base(code: str) -> str:
     return code.split("-")[0].lower()
 
 
-def choose_track(tracks: list[Any], preferred: list[str]) -> tuple[Any, TranscriptSource] | None:
+def _spoken_language(
+    auto: list[Any], manual: list[Any], preferred: list[str], hint: str | None
+) -> str:
+    """Which auto track is the original audio?
+
+    Usually there is exactly one. Videos with AI-dubbed audio (YouTube
+    auto-dubbing) get one auto track per audio language, though, and the dub can
+    come first. Tie-breakers: the language YouTube reports for the video, then
+    an auto language the creator also wrote captions in, then preference order.
+    """
+    langs = [_base(t.language_code) for t in auto]
+    if len(set(langs)) == 1:
+        return langs[0]
+    if hint and _base(hint) in langs:
+        return _base(hint)
+    manual_langs = {_base(t.language_code) for t in manual}
+    with_manual = [lang for lang in langs if lang in manual_langs]
+    if len(with_manual) == 1:
+        return with_manual[0]
+    for lang in preferred:
+        if lang in (with_manual or langs):
+            return lang
+    return (with_manual or langs)[0]
+
+
+def choose_track(
+    tracks: list[Any], preferred: list[str], spoken_hint: str | None = None
+) -> tuple[Any, TranscriptSource] | None:
     """Pick the caption track that matches what is actually *spoken*.
 
-    YouTube's auto-generated track is always in the spoken language, so it tells
-    us the original language. Manual captions in other languages are usually
-    community translations — using them would make citations quote words that
-    were never said. Order:
+    YouTube's auto-generated track is in the spoken language, so it tells us the
+    original language. Manual captions in other languages are usually community
+    translations — using them would make citations quote words that were never
+    said. Order:
       1. manual captions in the spoken language
       2. auto captions (spoken language)
       3. manual captions in a preferred language (no auto track to compare with)
@@ -44,11 +71,11 @@ def choose_track(tracks: list[Any], preferred: list[str]) -> tuple[Any, Transcri
     manual = [t for t in tracks if not t.is_generated]
     auto = [t for t in tracks if t.is_generated]
     if auto:
-        spoken = _base(auto[0].language_code)
+        spoken = _spoken_language(auto, manual, preferred, spoken_hint)
         same = next((t for t in manual if _base(t.language_code) == spoken), None)
         if same:
             return same, TranscriptSource.MANUAL
-        return auto[0], TranscriptSource.AUTO
+        return next(t for t in auto if _base(t.language_code) == spoken), TranscriptSource.AUTO
     for lang in preferred:
         hit = next((t for t in manual if _base(t.language_code) == lang), None)
         if hit:
@@ -56,7 +83,9 @@ def choose_track(tracks: list[Any], preferred: list[str]) -> tuple[Any, Transcri
     return manual[0], TranscriptSource.MANUAL
 
 
-def fetch_captions(video_id: str, languages: list[str]) -> Transcript | None:
+def fetch_captions(
+    video_id: str, languages: list[str], spoken_hint: str | None = None
+) -> Transcript | None:
     """Return captions or ``None`` if the video has none / they are blocked."""
     from youtube_transcript_api import YouTubeTranscriptApi
 
@@ -67,7 +96,7 @@ def fetch_captions(video_id: str, languages: list[str]) -> Transcript | None:
         log.info("captions.unavailable", video_id=video_id, error=type(exc).__name__)
         return None
 
-    picked = choose_track(list(listing), languages)
+    picked = choose_track(list(listing), languages, spoken_hint)
     if picked is None:
         return None
     chosen, source = picked
@@ -176,10 +205,14 @@ def transcribe_whisper(
 
 
 def get_transcript(
-    video_id: str, settings: Settings, duration: float, progress: ProgressFn = _noop
+    video_id: str,
+    settings: Settings,
+    duration: float,
+    progress: ProgressFn = _noop,
+    spoken_hint: str | None = None,
 ) -> Transcript:
     progress(0.0, "Looking for captions")
-    captions = fetch_captions(video_id, settings.transcript_languages)
+    captions = fetch_captions(video_id, settings.transcript_languages, spoken_hint)
     if captions and captions.segments:
         progress(1.0, f"Using {captions.source.value.replace('_', ' ')}")
         return captions

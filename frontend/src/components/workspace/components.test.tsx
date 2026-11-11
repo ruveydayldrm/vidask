@@ -52,6 +52,32 @@ describe("AnswerMarkdown", () => {
     expect(document.querySelector("a[href^='#t=']")).toBeNull();
   });
 
+  it("opens YouTube at the cited second when embedding is blocked", () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    function Block() {
+      const { setEmbedBlocked } = usePlayer();
+      useEffect(() => setEmbedBlocked(true), [setEmbedBlocked]);
+      return null;
+    }
+    render(
+      <I18nProvider initial="en">
+        <TooltipProvider>
+          <PlayerProvider videoId="abc123def45">
+            <Block />
+            <AnswerMarkdown content={"Explained here [01:05]."} />
+          </PlayerProvider>
+        </TooltipProvider>
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /jump to 01:05/i }));
+    expect(open).toHaveBeenCalledWith(
+      "https://www.youtube.com/watch?v=abc123def45&t=65s",
+      "_blank",
+      "noopener",
+    );
+    open.mockRestore();
+  });
+
   it("marks on-screen citations", () => {
     wrap(
       <AnswerMarkdown
